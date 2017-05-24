@@ -58,32 +58,31 @@ int main() {
 		std::getline(std::cin, input);
 		std::cout << endl;
 		std::vector<std::string> tokens;
-		split(tokens, input, is_any_of(" "), token_compress_on);
-		
-		// put, get or quit
-		std::string command = tokens[0];
+		if (!input.empty()) {
+			split(tokens, input, is_any_of(" "), token_compress_on);
+			// put, get or quit
+			std::string command = tokens[0];
 
-		if (command == string("put")) {
-			uint32_t key = stoi(tokens[1]);
-			std::string value = tokens[2];
-			self->request(keyValueActor, std::chrono::seconds(1), put_atom::value, key, value).receive([=](void) {
-				std::cout << "Successfully inserted key " << tokens[1] << " with value " << value << " into the key-value store!" << endl;
-			}, [](error) {});
+			if (command == string("put")) {
+				uint32_t key = stoi(tokens[1]);
+				std::string value = tokens[2];
+				self->request(keyValueActor, std::chrono::seconds(1), put_atom::value, key, value).receive([=](void) {
+					std::cout << "Successfully inserted key " << tokens[1] << " with value " << value << " into the key-value store!" << endl;
+				}, [](error) {});
+			}
+			else if (command == string("get")) {
+				uint32_t key = stoi(tokens[1]);
+				self->request(keyValueActor, std::chrono::seconds(1), get_atom::value, key).receive([=](std::string value) {
+					std::cout << "Successfully retrieved key " << tokens[1] << " with value " << value << " from the key-value store!" << endl;
+				}, [](error) {});
+			}
+			else if (command == string("quit")) {
+				running = false;
+			}
+			else {
+				// Ignore the command.
+			}
 		}
-		else if (command == string("get")) {
-			uint32_t key = stoi(tokens[1]);
-			self->request(keyValueActor, std::chrono::seconds(1), get_atom::value, key).receive([=](std::string value) {
-				std::cout << "Successfully retrieved key " << tokens[1] << " with value " << value << " from the key-value store!" << endl;
-			}, [](error) {});
-		}
-		else if (command == string("quit")) { 
-			running = false;
-		}
-		else {
-			// Ignore the command.
-		}
-		// Write a newline 
-		std::cout << endl;
 	}
 	std::cout << "Goodbye!" << endl;
 
