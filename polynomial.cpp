@@ -3,8 +3,6 @@
 // Exercise 1: Polynomial Evaluator
 #include <string>
 #include <iostream>
-#include <chrono>
-#include <thread>
 
 #include "caf/all.hpp"
 
@@ -86,12 +84,9 @@ int main() {
 			[&](double evaluatedPolynomial) {
 			// I'd love to write unit tests for this here instead of writing it to aout.
 			// Do you have something like eunit or common_test?
-			aout(self) << evaluatedPolynomial << endl;
+			std::cout << evaluatedPolynomial << endl;
 		}
 		);
-		// how do I make this receive synchronous?
-		// I don't like using sleep here.
-		std::this_thread::sleep_for(std::chrono::milliseconds(50));
 	}
 
 
