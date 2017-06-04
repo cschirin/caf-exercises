@@ -59,6 +59,10 @@ int main() {
 		std::cout << endl;
 		std::vector<std::string> tokens;
 		if (!input.empty()) {
+			// TODO: Pass the "put 7 James Bond" Test.
+			// I need a regex which consists of the parts 
+			// (put|get|quit)SPACE(Key=[0-9]+)SPACE(Value=anyChar*)
+			// Parse Key and Value.
 			split(tokens, input, is_any_of(" "), token_compress_on);
 			// put, get or quit
 			std::string command = tokens[0];

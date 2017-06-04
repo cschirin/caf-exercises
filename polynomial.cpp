@@ -82,8 +82,6 @@ int main() {
 		//receive from the actor 
 		self->receive(
 			[&](double evaluatedPolynomial) {
-			// I'd love to write unit tests for this here instead of writing it to aout.
-			// Do you have something like eunit or common_test?
 			std::cout << evaluatedPolynomial << endl;
 		}
 		);
