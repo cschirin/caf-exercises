@@ -11,7 +11,7 @@ using namespace caf;
 using namespace std;
 
 // Wait, wasn't "replies_to" called "responds_to" in the problem set?
-using kvs = typed_actor<reacts_to<put_atom, uint32_t, std::string>,replies_to<get_atom, uint32_t>::with<std::string>>;
+using kvs = typed_actor<reacts_to<put_atom, uint32_t, std::string>, replies_to<get_atom, uint32_t>::with<std::string>>;
 
 struct kvs_state {
 	std::unordered_map<uint32_t, std::string> data;
@@ -22,15 +22,15 @@ kvs::behavior_type kvs_impl(kvs::stateful_pointer<kvs_state> self) {
 	return {
 		// Let's play it safe and pass by value
 		[=](put_atom, const uint32_t key, const std::string value) {
-			// Update the map
-			self->state.data[key] = value;
-		},
-		[=](get_atom, const uint32_t key) -> std::string {
-			// Retrieve from the map
-			// The default initialization for std::string is the empty string http://en.cppreference.com/w/cpp/language/default_initialization
-			// So this will respond with an empty string to unknown ids http://www.cplusplus.com/reference/unordered_map/unordered_map/operator[]/
-			return self->state.data[key];
-		}
+		// Update the map
+		self->state.data[key] = value;
+	},
+	[=](get_atom, const uint32_t key) -> std::string {
+		// Retrieve from the map
+		// The default initialization for std::string is the empty string http://en.cppreference.com/w/cpp/language/default_initialization
+		// So this will respond with an empty string to unknown ids http://www.cplusplus.com/reference/unordered_map/unordered_map/operator[]/
+		return self->state.data[key];
+	}
 	};
 
 }

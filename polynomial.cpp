@@ -24,12 +24,12 @@ behavior polynomial(std::array<double, 5> as) {
 		// x^4, x^3, x^2, x^1, x^0
 		double exponent = as.size() - 1; // This is at generalized as it gets, it would also work for polynomials with a degree that is not 4.
 		// Doing this with a for loop because C++11 doesn't support fold
-		for (double a : as) { 
+		for (double a : as) {
 			result += a * std::pow(x, exponent); //how does pow behave at x^0? // Apparently it returns 1.
 			exponent -= 1; // We need to go from size - 1 to 0 here.
 		}
 		return result;
-	}
+		}
 	};
 }
 
@@ -44,7 +44,7 @@ int main() {
 
 	// Let us use an plain old for loop here because I don't see the benefit over using foreach here.
 	// I do need the index here. Even if only to make the user prompt more understandable.
-	for (unsigned int i = 0; i < as.size() ; i++) {
+	for (unsigned int i = 0; i < as.size(); i++) {
 		// Prompt the user to input something
 		std::cout << "Please input a" << i << ": ";
 		// declare a temporary variable for the input
