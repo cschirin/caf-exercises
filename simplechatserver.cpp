@@ -6,9 +6,9 @@
 
 // "Implement an actor that receives join, chat, leave and ls messages.
 // Pseudo Erlang notation: 
-// {join, Name:string, Handle}
-// {chat, Msg:string} -> {chat, Message: string} // The server just relays the messages to all the other actors
-// {leave, Goodbye:string, Handle} 
+// {join, Name:string, Handle:strong_actor_ptr}
+// {chat, Msg:string} -> {chat, Name: string, Msg: string} // The server relays the messages to all the other actors
+// {leave, Goodbye:string, OriginalSender:strong_actor_ptr} 
 // down_msg are converted into leave messages
 // {ls} -> NicknamesList: vector<string>
 
@@ -35,8 +35,10 @@ using scs = typed_actor<
 
 // Definition of the state of the simple chat server. 
 struct scs_state {
-	std::vector<std::string> nicknames;
-	std::vector<strong_actor_ptr> participants;
+	// switched from two vectors to a map because 
+	// two distinct participants may have the same name, but 
+	// they can't have the same reference.
+	std::map<strong_actor_ptr, std::string> participants;
 };
 
 scs::behavior_type scs_impl(scs::stateful_pointer<scs_state> self) {
@@ -50,21 +52,19 @@ scs::behavior_type scs_impl(scs::stateful_pointer<scs_state> self) {
 		// "On a join message (that also contains a nickname and a handle to the new actor),
 		// the sender of the message will be added to the list of chat participants."
 		[=](join_atom, std::string name, strong_actor_ptr handle) {
-			// add to nicknames
-			self->state.nicknames.push_back(name);
 			// monitor the new participant
 			self->monitor(handle);
-			// add to participants
-			self->state.participants.push_back(handle);
+			// add to nicknames
+			self->state.participants[handle] = name;
 		},
 		// "On a chat message, the message is forwarded to all participants except for the sender of the chat message."
 		[=](chat_atom, std::string message) -> std::string {
 			auto sender = self->current_sender();
-			for (strong_actor_ptr participant : self->state.participants) {
-				if (participant != sender) {
+			for (auto participant : self->state.participants) {
+				if (participant.first != sender) {
 					// Cast the strong_actor_ptr to type scc.
 					// https://actor-framework.readthedocs.io/en/stable/ReferenceCounting.html#actor-cast
-					scc peer = actor_cast<scc>(participant);
+					scc peer = actor_cast<scc>(participant.first);
 					// Forward the message to the participant.
 					self->send(peer,message);
 				};
@@ -73,11 +73,20 @@ scs::behavior_type scs_impl(scs::stateful_pointer<scs_state> self) {
 			// On leave message, (that may contain a goodbye message), the sender of the leave message is erased from the list of chat participants.
 			[=](leave_atom, std::string goodbyeMessage, strong_actor_ptr originalSender) {
 				// Send the goodbye message
-				self->send(self,atom("chat"),goodbyeMessage)
+				self->send(self,atom("chat"),goodbyeMessage);
+				// Remove from the list of participants
+				self->state.participants.erase(originalSender);
 			},
 			// On an ls message, the actor responds with a list of known nicknames to the sender.
 			[=](ls_atom) -> std::vector<std::string> {
-
+				std::vector<std::string> result;
+				// Get all the current participants and 
+				// accumulate them in a list.
+				for (auto participant : self->state.participants) {
+					result.push_back(participant.second);
+				}
+				// Send the list of chat participants to the sender.
+				self->send(self->current_sender(), result);
 			}
 
 	}
