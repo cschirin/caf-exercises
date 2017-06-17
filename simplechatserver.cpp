@@ -20,14 +20,14 @@ using ls_atom = atom_constant<atom("ls")>;
 
 // Type definition of the simple chat client.
 using scc = typed_actor<
-	reacts_to<std::string>,
+	reacts_to<std::string, std::string >,
 	reacts_to<std::vector<std::string>>
 >;
 
 // Type definition of the simple chat server.
 using scs = typed_actor<
 	reacts_to<join_atom, std::string, scc>,
-	replies_to<chat_atom, std::string, std::string>::with<std::string, std::string>,
+	reacts_to<chat_atom, std::string, std::string>,
 	reacts_to<leave_atom, std::string, scc>,
 	//also reacts to down messages using the down handler
 	replies_to<ls_atom>::with<std::vector<std::string>>
@@ -46,7 +46,8 @@ scs::behavior_type scs_impl(scs::stateful_pointer<scs_state> self) {
 	self->set_down_handler([=](down_msg d) {
 		// "Treat down messages in the same way leave messages are handled"
 		// by converting them into leave messages and re-sending them!
-		self->send(self, atom("leave"), to_string(d.reason), self->current_sender());
+		scc originalSender = actor_cast<scc>(self->current_sender());
+		self->send(self, atom("leave"), to_string(d.reason), originalSender);
 	});
 	return {
 		// "On a join message (that also contains a nickname and a handle to the new actor),
@@ -58,7 +59,7 @@ scs::behavior_type scs_impl(scs::stateful_pointer<scs_state> self) {
 		self->state.participants[handle] = name;
 		},
 		// "On a chat message, the message is forwarded to all participants except for the sender of the chat message."
-		[=](chat_atom, std::string name, std::string message) -> std::string {
+		[=](chat_atom, std::string name, std::string message) {
 			auto sender = self->current_sender();
 			for (auto participant : self->state.participants) {
 				if (participant.first != sender) {
@@ -86,7 +87,7 @@ scs::behavior_type scs_impl(scs::stateful_pointer<scs_state> self) {
 				result.push_back(participant.second);
 			}
 			// Send the list of chat participants to the sender.
-			self->send(self->current_sender(), result);
+			return result;
 		}
 	};
 }
@@ -98,7 +99,7 @@ public:
 	scs_config() {
 		// https://actor-framework.readthedocs.io/en/stable/NetworkTransparency.html#middleman
 		// The middleman is the main component of the I/O module and enables distribution.
-		load<io::middleman>();
+		load<caf::io::middleman>();
 		opt_group{ custom_options_, "global" }
 		.add(port, "port,p", "set port");
 	}
