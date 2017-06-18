@@ -5,13 +5,14 @@
 #include "caf/all.hpp"
 #include "caf/io/all.hpp"
 
-// "Implement an actor that receives join, chat, leave and ls messages.
+// "Implement an actor that receives join, chat, leave and ls messages."
 // Pseudo Erlang notation: 
 // {join, Name:string, Handle:strong_actor_ptr}
 // {chat, Name:string, Msg:string} -> {chat, Name: string, Msg: string} // The server relays the messages to all the other actors
 // {leave, Goodbye:string, OriginalSender:strong_actor_ptr} 
 // down_msg are converted into leave messages
 // {ls} -> NicknamesList: vector<string>
+
 
 using namespace caf;
 
