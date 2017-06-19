@@ -13,6 +13,9 @@
 // down_msg are converted into leave messages
 // {ls} -> NicknamesList: vector<string>
 
+// Implementation Notes: 
+// I decided against using the group communication facilities of CAF.
+
 
 using namespace caf;
 
@@ -97,8 +100,15 @@ using namespace caf;
 		// Publish the implemented actor on the port specified in the command-line arguments.
 		if (system.has_middleman()) {
 			auto& mm = system.middleman();
-			mm.publish(server, cfg.port);
+			auto p = mm.publish(server, cfg.port);
+            if (*p != cfg.port) {
+                std::cerr << "Port failed to bind!"  << std::endl;
+                std::cerr << "Actual port number: " << *p << std::endl; 
+            };
+            std::cout << "Server successfully published on port " << cfg.port << std::endl;
 		}
+        std::cout << "Press any key to quit the server" << std::endl;
+        std::cin.get();
 	}
 
 CAF_MAIN(io::middleman)
