@@ -20,21 +20,21 @@ behavior scc_impl(event_based_actor* self, const actor server) {
     return {
         // Messages coming from the scoped actor in the client main
         [=](join_atom, std::string name) {
-            self->send(server, atom("join"),name, self);
+            self->send(server, join_atom::value ,name, self);
         },
         [=](chat_atom, std::string name, std::string message) {
-            self->send(server, atom("chat"), name, message);
+            self->send(server, chat_atom::value , name, message);
         },
         [=](leave_atom, std::string goodbyeMessage) {
-            self->send(server, atom("leave"), goodbyeMessage, self);
+            self->send(server, leave_atom::value , goodbyeMessage, self);
         },
         [=](ls_atom) {
-            self->send(server, atom("ls"));
+            self->send(server, ls_atom::value);
         },
         // Messages coming from the server
         [=](std::string name, std::string message) {
             // "All received messages are printed to the terminal."
-            std::cout << name << ": " << message << endl;
+            std::cout << endl << name << ": " << message << endl;
         },
         [=](std::vector<std::string> peers) {
             std::cout << "Connected peers: " << std::endl;
@@ -50,7 +50,6 @@ class scc_config : public actor_system_config {
 	public:
 		uint16_t port = 0;
 		std::string name; 
-        bool running = true;
 		scc_config() {
 			// https://actor-framework.readthedocs.io/en/stable/NetworkTransparency.html#middleman
 			// The middleman is the main component of the I/O module and enables distribution.
@@ -85,31 +84,49 @@ void caf_main(actor_system& system, const scc_config& cfg) {
     // The client can be spawned now.
     // It is safe to "dereference" server now.
     actor client = system.spawn(scc_impl, *server);
-    while (cfg.running) {
+
+    // Spawn a scoped actor to send commands to the chat client.
+    scoped_actor self{system};
+
+    cout << "Joining the server." << endl;
+    self->send(client, join_atom::value, name);
+
+    bool running = true;
+    while (running) {
         // Prompt the user.
-        cout << name << ">" << endl;
+        cout << name << ">";
         // Process the input.
         // Read the first character.
         string line;
+        std::getline(std::cin, line);
         if (line[0] == '/') {
             // Process the /ls or /quit command.
             if (line[1] == 'l' && line[2] == 's') {
                 // ls message
-                
+                std::cout << endl;
+                self->send(client, ls_atom::value);
             }
-            else if (line[1] == 'q' && line[2] == 'u' && 
-                     line[3] == 'i' && line[4] == 't')
+            else if (line[1] == 'q' && line[2] == 'u' &&
+                line[3] == 'i' && line[4] == 't') {
                 // quit message  
+                std::cout << "Please write your goodbye message: ";
+                std::getline(std::cin, line);
+                self->send(client, leave_atom::value, line);
+                std::cout << endl << "Quitting the chat room." << endl;
+                running = false;
             }
             else {
                 std::cout << "Please input a valid command."
-                    << "\ls \quit or a chat message. ";
+                    << "/ls /quit or a chat message. ";
             }
         } else {
-            // Process the chat message.
-      
+            // Process the chat message. 
+            self->send(client, chat_atom::value, cfg.name, line);
         }
+        std::cout << endl;
     };
+    
+    
 
 }
 

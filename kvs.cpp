@@ -70,13 +70,13 @@ int main() {
 			if (command == string("put")) {
 				uint32_t key = stoi(tokens[1]);
 				std::string value = tokens[2];
-				self->request(keyValueActor, std::chrono::seconds(1), put_atom::value, key, value).receive([=](void) {
+				self->request(keyValueActor, infinite, put_atom::value, key, value).receive([=](void) {
 					std::cout << "Successfully inserted key " << tokens[1] << " with value " << value << " into the key-value store!" << endl;
 				}, [](error) {});
 			}
 			else if (command == string("get")) {
 				uint32_t key = stoi(tokens[1]);
-				self->request(keyValueActor, std::chrono::seconds(1), get_atom::value, key).receive([=](std::string value) {
+				self->request(keyValueActor, infinite, get_atom::value, key).receive([=](std::string value) {
 					std::cout << "Successfully retrieved key " << tokens[1] << " with value " << value << " from the key-value store!" << endl;
 				}, [](error) {});
 			}

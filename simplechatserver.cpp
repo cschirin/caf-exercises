@@ -51,13 +51,15 @@ using namespace caf;
 			// "On a chat message, the message is forwarded to all participants except for the sender of the chat message."
 			[=](chat_atom, std::string name, std::string message) {
 				auto sender = self->current_sender();
+                auto senderAct = actor_cast<actor>(sender);
+                auto senderName = self->state.participants[senderAct];
 				for (auto participant : self->state.participants) {
 					if (participant.first != sender) {
 						// Cast the strong_actor_ptr to type scc.
 						// https://actor-framework.readthedocs.io/en/stable/ReferenceCounting.html#actor-cast
 						actor peer = actor_cast<actor>(participant.first);
 						// Forward the message to the participant.
-						self->send(peer,name,message);
+						self->send(peer,senderName,message);
 					};
 				}
 			},
